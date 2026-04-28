@@ -91,13 +91,11 @@ export default function WebcamAnalyzer({ isRunning, onStateUpdate, nightMode, al
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // State variables for drowsiness detection
+  // State variables for drowsiness detection (Timer-based)
   const EAR_THRESHOLD = 0.22;
-  const MICROSLEEP_FRAMES = 30;
-  const DROWSY_FRAMES = 15;
-  const closedFramesCounter = useRef(0);
-  const yawnFramesCounter = useRef(0);
-  const distractedFramesCounter = useRef(0);
+  const closedStartTime = useRef(0);
+  const yawnStartTime = useRef(0);
+  const distractedStartTime = useRef(0);
   const lastBlinkTime = useRef(Date.now());
   const blinksInLastMinute = useRef([]);
   const marHistory = useRef([]);
@@ -365,13 +363,15 @@ export default function WebcamAnalyzer({ isRunning, onStateUpdate, nightMode, al
 
         // --- Drowsiness & Behavior Logic ---
         let currentState = "Alert";
+        const now = performance.now();
 
         // 1. Check Distraction (Head Pose)
         if (yawRatio < 0.5 || yawRatio > 2.0) {
-          distractedFramesCounter.current += 1;
+          if (distractedStartTime.current === 0) distractedStartTime.current = now;
         } else {
-          distractedFramesCounter.current = 0;
+          distractedStartTime.current = 0;
         }
+        const distractedDuration = distractedStartTime.current > 0 ? now - distractedStartTime.current : 0;
 
         // 2. Check Yawning or Eating (Mouth Movement)
         marHistory.current.push(mar);
@@ -384,33 +384,38 @@ export default function WebcamAnalyzer({ isRunning, onStateUpdate, nightMode, al
         }
 
         if (mar > 0.45 || marVariance > 0.0015) {
-          yawnFramesCounter.current += 1;
+          if (yawnStartTime.current === 0) yawnStartTime.current = now;
         } else {
-          yawnFramesCounter.current = 0;
+          yawnStartTime.current = 0;
         }
+        const yawnDuration = yawnStartTime.current > 0 ? now - yawnStartTime.current : 0;
 
         // 3. Check Eyes
         if (averageEAR < EAR_THRESHOLD) {
-          closedFramesCounter.current += 1;
+          if (closedStartTime.current === 0) closedStartTime.current = now;
         } else {
-          if (closedFramesCounter.current >= 2 && closedFramesCounter.current < DROWSY_FRAMES) {
-             const now = Date.now();
-             blinksInLastMinute.current.push(now);
-             lastBlinkTime.current = now;
+          if (closedStartTime.current > 0) {
+            const blinkDuration = now - closedStartTime.current;
+            if (blinkDuration > 50 && blinkDuration < 500) {
+               const absoluteNow = Date.now();
+               blinksInLastMinute.current.push(absoluteNow);
+               lastBlinkTime.current = absoluteNow;
+            }
           }
-          closedFramesCounter.current = 0;
+          closedStartTime.current = 0;
         }
+        const closedDuration = closedStartTime.current > 0 ? now - closedStartTime.current : 0;
 
-        // Determine final state
-        if (closedFramesCounter.current >= MICROSLEEP_FRAMES) {
+        // Determine final state based on STRICT TIMERS
+        if (closedDuration >= 1000) {
           currentState = "Microsleep";
-        } else if (closedFramesCounter.current >= DROWSY_FRAMES) {
+        } else if (closedDuration >= 500) {
           currentState = "Drowsy";
-        } else if (yawnFramesCounter.current >= 20) {
+        } else if (yawnDuration >= 600) {
           currentState = "Yawning / Distracted";
-        } else if (distractedFramesCounter.current >= 30) {
+        } else if (distractedDuration >= 1500) {
           currentState = "Not Concentrating";
-        } else if (closedFramesCounter.current > 0) {
+        } else if (closedDuration > 100) {
           currentState = "Fatigued";
         } else {
           currentState = "Alert";
@@ -431,7 +436,7 @@ export default function WebcamAnalyzer({ isRunning, onStateUpdate, nightMode, al
           yaw: yawRatio.toFixed(2),
           blinkRate,
           isTracking: true,
-          closedFramesRatio: closedFramesCounter.current / MICROSLEEP_FRAMES,
+          closedFramesRatio: Math.min(closedDuration / 1000, 1),
         };
 
         // --- Draw Rich Overlays ---
