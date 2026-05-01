@@ -1,6 +1,6 @@
 # Driver Drowsiness Detection System 🚗💤
 
-- **Live Demo / Website:** (https://driver-drowsiness-system.surge.sh/)*
+- **Live Demo / Website:**[https://driver-drowsiness-ditection.surge.sh/]
 - **GitHub Repository:** [https://github.com/jankookdebnath/driver-drowsiness-detection](https://github.com/jankookdebnath/driver-drowsiness-detection)
 
 ## Problem Statement
