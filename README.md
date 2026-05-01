@@ -47,7 +47,8 @@ The alarm does not rely on external MP3 files. It dynamically synthesizes an ala
 6. **Triggering Alerts:** This state change triggers instant UI updates (red flashing screens, warning text) and signals the **Web Audio API** logic in `App.jsx` to activate the synthesized siren, alerting the driver immediately.
 
 ## Demo Screenshots
-*(Add your screenshots here! Example: `![Dashboard View](link-to-image)`)*
+<img width="1899" height="840" alt="image" src="https://github.com/user-attachments/assets/b99f8166-a248-46a0-8d2b-d6fff6d50148" />
+
 
 ## Local Development
 1. Clone the repository
