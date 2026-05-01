@@ -48,6 +48,8 @@ The alarm does not rely on external MP3 files. It dynamically synthesizes an ala
 
 ## Demo Screenshots
 <img width="1899" height="840" alt="image" src="https://github.com/user-attachments/assets/b99f8166-a248-46a0-8d2b-d6fff6d50148" />
+<img width="1909" height="836" alt="image" src="https://github.com/user-attachments/assets/ab08e325-3275-4edc-be7e-0beb81767cd5" />
+
 
 
 ## Local Development
